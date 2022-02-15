@@ -1,2 +1,2 @@
 # hello-go-docker-v2
-Hello World using Go, Docker compose and live reloading.
+Hello World API server using Go, Docker compose, live reloading, PostgreSQL and a deployable container.
