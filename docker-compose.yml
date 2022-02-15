@@ -9,5 +9,31 @@ services:
       - .:/opt/app/api
     environment:
       SERVER_ADDR: ":3000"
+      DATABASE_URL: postgres://admin-dev@db/hello-go-docker-v2?sslmode=disable 
     ports:
       - "3000:3000"
+    links:
+      - db
+  db:
+    image: postgres:13-alpine
+    volumes:
+      - data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: hello-go-docker-v2
+      POSTGRES_USER: admin-dev
+      POSTGRES_HOST_AUTH_METHOD: trust
+  migrate: &basemigrate
+    profiles: ["tools"]
+    image: migrate/migrate
+    entrypoint: "migrate -database postgresql://admin-dev@db/hello-go-docker-v2?sslmode=disable -path /tmp/migrations"
+    command: up
+    links:
+      - db
+    volumes:
+      - ./migrations:/tmp/migrations
+  create-migration:
+    <<: *basemigrate
+    entrypoint: migrate create -dir /tmp/migrations -ext sql
+    command: ""
+volumes:
+  data:

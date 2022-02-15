@@ -1,18 +1,20 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
-	// Make sure you change this line to match your module
 	"github.com/caiolouro/hello-go-docker-v2/server"
+	"github.com/caiolouro/hello-go-docker-v2/storage"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
 
 const (
-	serverAddrFlagName string = "addr"
+	serverAddrFlagName          string = "addr"
+	apiServerStorageDatabaseURL string = "database-url"
 )
 
 func main() {
@@ -37,6 +39,7 @@ func serverCmd() *cli.Command {
 		Usage: "starts the server",
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: serverAddrFlagName, EnvVars: []string{"SERVER_ADDR"}},
+			&cli.StringFlag{Name: apiServerStorageDatabaseURL, EnvVars: []string{"DATABASE_URL"}},
 		},
 		Action: func(c *cli.Context) error {
 			done := make(chan os.Signal, 1)
@@ -48,8 +51,14 @@ func serverCmd() *cli.Command {
 				close(stopper)
 			}()
 
+			databaseURL := c.String(apiServerStorageDatabaseURL)
+			s, err := storage.NewStorage(databaseURL)
+			if err != nil {
+				return fmt.Errorf("could not initialize storage: %w", err)
+			}
+
 			addr := c.String(serverAddrFlagName)
-			server, err := server.NewServer(addr)
+			server, err := server.NewServer(addr, s)
 			if err != nil {
 				return err
 			}
