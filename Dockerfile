@@ -8,3 +8,18 @@ RUN curl -sSfL https://raw.githubusercontent.com/cosmtrek/air/master/install.sh 
 
 WORKDIR /opt/app/api
 CMD ["air"]
+
+FROM base as built
+
+WORKDIR /go/app/api
+COPY . .
+
+ENV CGO_ENABLED=0
+
+RUN go get -d -v ./...
+RUN go build -o /tmp/server ./*.go
+
+FROM busybox
+
+COPY --from=built /tmp/server /usr/bin/server
+CMD ["server", "start"]
